@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# This pass-through script will force all network traffic through ProxyChains
+# when the environment variable TAILSCALE_AUTH_KEY is set so that the target
+# process will have access to the Tailscale network.
+
+# Usage:
+#   tailscale_proxy <command>
+
+set -e # Halt on errors
+
+if [ -z "$TAILSCALE_AUTH_KEY" ]; then
+    echo "[tailscale_proxy]: Tailscale network will be unavailable because TAILSCALE_AUTH_KEY is not set."
+    exec "$@"
+elif ! command -v proxychains4 >/dev/null 2>&1; then
+    echo "[tailscale_proxy]: Tailscale network will be unavailable because proxychains4 is not available."
+    exec "$@"
+else
+    echo "[tailscale_proxy]: Tailscale network will be made available."
+    proxychains4 -q -f vendor/proxychains-ng/proxychains.conf "$@"
+fi

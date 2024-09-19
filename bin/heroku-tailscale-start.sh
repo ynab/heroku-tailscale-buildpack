@@ -11,10 +11,10 @@ function indent() {
 }
 
 if [ -z "$TAILSCALE_AUTH_KEY" ]; then
-  log "Skipping Tailscale"
+  log "[tailscale]: Will not start because TAILSCALE_AUTH_KEY is not set"
 
 else
-  log "Starting Tailscale"
+  log "[tailscale]: Starting..."
 
   if [ -z "$TAILSCALE_HOSTNAME" ]; then
     if [ -z "$HEROKU_APP_NAME" ]; then
@@ -30,21 +30,21 @@ else
   else
     tailscale_hostname="$TAILSCALE_HOSTNAME"
   fi
-  log "Using Tailscale hostname=$tailscale_hostname"
-
-  tailscaled -verbose ${TAILSCALED_VERBOSE:-0} --tun=userspace-networking --socks5-server=localhost:1055 &
-  until tailscale up \
-    --authkey=${TAILSCALE_AUTH_KEY} \
+  log "[tailscale]: Using hostname=$tailscale_hostname"
+  log "[tailscale]: Starting tailscaled..."
+  tailscaled -cleanup > /dev/null 2>&1
+  tailscaled -verbose ${TAILSCALED_VERBOSE:--1} --tun=userspace-networking --socks5-server=localhost:1055 &
+  log "[tailscale]: Running 'tailscale up' with 15s timeout..."
+  tailscale up \
+    --authkey="${TAILSCALE_AUTH_KEY}?preauthorized=true&ephemeral=true" \
     --hostname="$tailscale_hostname" \
     --accept-dns=${TAILSCALE_ACCEPT_DNS:-true} \
     --accept-routes=${TAILSCALE_ACCEPT_ROUTES:-true} \
     --advertise-exit-node=${TAILSCALE_ADVERTISE_EXIT_NODE:-false} \
-    --shields-up=${TAILSCALE_SHIELDS_UP:-false}
-  do
-    log "Waiting for 5s for Tailscale to start"
-    sleep 5
-  done
+    --shields-up=${TAILSCALE_SHIELDS_UP:-false} \
+    --advertise-tags=${TAILSCALE_ADVERTISE_TAGS:-} \
+    --timeout=15s
 
   export ALL_PROXY=socks5://localhost:1055/
-  log "Tailscale started"
+  log "[tailscale]: Started - SOCKS5 proxy available at localhost:1055"
 fi

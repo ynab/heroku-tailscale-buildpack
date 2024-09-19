@@ -1,64 +1,53 @@
 # Heroku buildpack to use Tailscale on Heroku
 
-Run [Tailscale](https://tailscale.com/) on a Heroku dyno, shoving connections through proxychains.
-
-## Why is proxychains necessary?
-
-It really shouldn't be. However, I discovered that in my project to use Django and PostgreSQL,
-pyscopg did not respect the ``ALL_PROXY`` environment variable. In order to get the network
-communication to go through the Tailscale SOCKS5 proxy, I needed to manually force it. Enter
-proxychains-ng.
+Run [Tailscale](https://tailscale.com/) on a Heroku dyno.
 
 This is based on https://tailscale.com/kb/1107/heroku/.
 
 Thank you to @rdotts, @kongmadai, @mvisonneau for their work on tailscale-docker and tailscale-heroku.
 
+
 ## Usage
 
-To set up your Heroku application, add the buildpack and ``TAILSCALE_AUTH_KEY``
-environment variable:
+To set up your Heroku application:
+1. Add the buildpack to your app with `heroku buildpacks:add https://github.com/ynab/heroku-tailscale-buildpack --app your-app-name`
+1. Obtain a Tailscale Auth key and set the environment variable `TAILSCALE_AUTH_KEY` using its value: `heroku config:set TAILSCALE_AUTH_KEY="your-auth-key-or-oauth-secret" --app your-app-name`
 
-    $ heroku buildpacks:add https://github.com/aspiredu/heroku-tailscale-buildpack
-    Buildpack added. Next release on test-app will use aspiredu/heroku-tailscale-buildpack.
-    Run `git push heroku main` to create a new release using this buildpack.
+    ⚠ Note: You may also provide an OAuth Client Secret for the `TAILSCALE_AUTH_KEY` value but when doing so, you must also specify at least one tag to assign using the config `TAILSCALE_ADVERTISE_TAGS`.
 
-    $ heroku config:set TAILSCALE_AUTH_KEY="..."
-    $ git push heroku main
-    ...
+1. Configure your application to use the Tailscale network by sending network requests through the SOCKS5 proxy listening at `127.0.0.1:1005`.  If any of the following apply to your app, no changes will need to be made:
+   1. Your app reads and respects the environment variable `ALL_PROXY`.
+   2. You are using a Ruby on Rails app and calling `bundle exec ...`, `rake ...`, or `rails ...` to start your app.  This buildpack will automatically configure the environment to use the SOCKS proxy by configuring a ProxyChains passthrough script for these scripts.
+    
+    ⚠ Note: If you are not able to configure your application to send requests through a SOCKS5 proxy, you will need to use [ProxyChains](#proxychains).  See additional instructions [below](#proxychains).       
 
-To have your processes connect through the Tailscale proxy, you need to update your
-``Procfile``. Here's an example for a Django project with a Celery worker:
+1. Push a change to your Heroku app to build and deploy a new version
+
+
+## ProxyChains
+
+The buildpack pre-installs [ProxyChains](https://github.com/rofl0r/proxychains-ng) which is a program that forces any TCP connection made by an application through a proxy like SOCKS5.  Usage of ProxyChains is only necessary if your application does not support SOCKS5 proxies natively.
+
+To use ProxyChains, update your `Procfile` to prefix your command(s) with `bin/tailscale_proxy`.  For example, if you are using Django and Celery, your `Procfile` might look like this:
 
 ```
-web: proxychains4 -f vendor/proxychains-ng/conf/proxychains.conf uvicorn --host 0.0.0.0 --port "$PORT" myproject.project.asgi:application
-worker: proxychains4 -f vendor/proxychains-ng/conf/proxychains.conf celery -A myproject.project worker
+web: bin/tailscale_proxy uvicorn --host 0.0.0.0 --port "$PORT" myproject.project.asgi:application
+worker: bin/tailscale_proxy celery -A myproject.project worker
 ```
+
+If the `TAILSCALE_AUTH_KEY` environment variable is set, the `bin/tailscale_proxy` script will configure the application to use ProxyChains.  Otherwise, the application will be run without ProxyChains.
+
+## Known issues
+
+- Connecting via tailnet hostnames is not supported.  You must use the tailnet IP address of the target machine.
 
 ## Testing the integration
 
-To test a connection, you can add the ``hello.ts.net`` machine into your network.
-[Follow the instructions here](https://tailscale.com/kb/1073/hello/?q=testing). You
-may need to modify your ACLs to allow access to the test machine. For example, I have
-a separate Tailscale token that is tagged with ``tag:test``. My ACL looks like:
-
-```json
-{
-  "hosts": {
-      "hello-test": "100.101.102.103"
-  },
-  
-  // Access control lists.
-  "acls": [
-      // Only allow the test tag to access anything.
-      {"action": "accept", "src": ["tag:test"], "dst": ["hello-test:*"]}
-  ]
-}
-```
-
-To verify the connection works run:
+To test a connection, you can add the ``hello.ts.net`` machine into your network,
+[follow the instructions here](https://tailscale.com/kb/1073/hello/?q=testing).  Once this machine is added to your network, you can test the connection by running:
 
 ```shell
-heroku run -- heroku-tailscale-test.sh
+heroku run heroku-tailscale-test.sh --app your-app-name
 ```
 
 You should see curl respond with ``<a href="https://hello.ts.net">Found</a>.``
@@ -68,16 +57,14 @@ You should see curl respond with ``<a href="https://hello.ts.net">Found</a>.``
 
 The following settings are available for configuration via environment variables:
 
+- ``TAILSCALE_AUTH_KEY`` - Provide an Auth key for authentication.  You may alternatively provide an OAuth Client Secret but you must also set the `TAILSCALE_ADVERTISE_TAGS` environment variable. **This must be set.**
 - ``TAILSCALE_ACCEPT_DNS`` - Accept DNS configuration from the admin console. Defaults 
   to accepting DNS settings.
 - ``TAILSCALE_ACCEPT_ROUTES`` - Accept subnet routes that other nodes advertise. Linux devices 
   default to not accepting routes. Defaults to accepting.
 - ``TAILSCALE_ADVERTISE_EXIT_NODES`` - Offer to be an exit node for outbound internet traffic 
   from the Tailscale network. Defaults to not advertising.
-- ``TAILSCALE_ADVERTISE_TAGS`` - Give tagged permissions to this device. You must be listed in 
-  \"TagOwners\" to be able to apply tags. Defaults to none.
-- ``TAILSCALE_AUTH_KEY`` - Provide an auth key to automatically authenticate the node as your 
-  user account. **This must be set.**
+- ``TAILSCALE_ADVERTISE_TAGS`` - Tags to assign to this device.  If the `TAILSCALE_AUTH_KEY` is an OAuth Client Secret, this value is required.
 - ``TAILSCALE_HOSTNAME`` - Provide a hostname to use for the device instead of the one provided 
   by the OS. Note that this will change the machine name used in MagicDNS. Defaults to the 
   hostname of the application (a guid). If you have [Heroku Labs runtime-dyno-metadata](https://devcenter.heroku.com/articles/dyno-metadata)
@@ -90,7 +77,6 @@ The following settings are for the compile process for the buildpack. If you cha
 trigger a new build to see the change. Simply changing the environment variables in Heroku will not
 cause a rebuild. These are all optional and will default to the latest values.
 
-- ``TAILSCALE_BUILD_TS_VERSION`` - The target version Tailscale package.
 - ``TAILSCALE_BUILD_TS_TARGETARCH`` - The target architecture for the Tailscale package.
 - ``TAILSCALE_BUILD_EXCLUDE_START_SCRIPT_FROM_PROFILE_D`` - Excludes the start script from the
   [buildpack's ``.profile.d/`` folder](https://devcenter.heroku.com/articles/buildpack-api#profile-d-scripts).
@@ -100,93 +86,3 @@ cause a rebuild. These are all optional and will default to the latest values.
   variables in respect to the executables. For example, a specific dyno could change
   ``TAILSCALE_HOSTNAME`` before tailscale starts.
 - ``TAILSCALE_BUILD_PROXYCHAINS_REPO`` - The repository to install the proxychains-ng library from.
-
-
-### Customizing proxychains.conf
-
-If you decide you want to customize the ``proxychains.conf`` configuration file, you can copy the
-file from conf into your project. If you copy it to the base directory of your application,
-ProxyChains will find it automatically. If you copy it to a specific directory, such as conf,
-you'll need to specify the path.
-
-For example, if your conf file exists at ``<project>/conf/proxychains.conf`` your web command
-would need to be:
-
-```shell
-proxychains4 -f conf/proxychains.conf <process>
-```
-
-## Deployment considerations
-
-Switching to a Tailscale database or service can be troublesome. Especially if you interact
-with the resource during the [Release phase of Heroku's deployments](https://devcenter.heroku.com/articles/release-phase)
-such as basic SQL migrations. This is because you don't want to use the ``proxychains4``
-wrapper if you don't have Tailscale running, and you can't have Tailscale running if you
-don't have a valid Tailscale auth key and the database/resource configured in your tailnet.
-
-I suggest working these problems out in reverse allowing for a fallback to a connection
-outside of your tailnet. Once you've done the final switch over, you can remove access
-to your database/resource from outside of the tailnet.
-
-1. Configure database/resource to be accessible in and outside of your tailnet
-2. Create a Tailscale auth key (reusuable[^1], not ephemeral, and appropriately tagged)
-3. Add the auth key and the Tailscale database/resource url to your Heroku app's environment variables.
-
-```shell
-heroku config:set TAILSCALE_AUTH_KEY=<tailscale_auth_key> \
-    TAILSCALE_DATABASE_URL=<tailscale_database_url>
-```
-
-4. Add the heroku-tailscale-buildpack
-
-```shell
-heroku buildpacks:add https://github.com/aspiredu/heroku-tailscale-buildpack
-```
-
-5. (Optional) Test your integration.
-    1. Add the [Tailscale test machine in your tailnet](https://tailscale.com/kb/1073/hello/?q=test)
-    2. Create a test tag that can only access the hello.ts.net machine via your ACLs
-    3. Create a reusable ephemeral auth token that has the test tag applied to it.
-    4. Temporarily change your application to use the test auth key.
-    5. Trigger a build. This should include this buildpack.
-    6. Run a one-off dyno to confirm that the setup is correct.
-
-    ```shell
-    heroku run heroku-tailscale-start.sh
-    ```
-    7. Restore the previous version of Tailscale auth key.
-
-6. Modify your application to try to use the Tailscale database/resource and fallback to
-   the non-tailnet version. If you're using python, the following script may help:
-
-```python
-import os
-import dj_database_url
-
-def tailscale_resource_key(base_key):
-    """Fetch the resource key for a Tailscale service.
-
-    It checks for an environment variable with the TAILSCALE_ prefix
-    and if it exists and TAILSCALE_AUTH_KEY is defined, it uses that key.
-    Else it returns the value that was passed in.
-
-    This is useful for configuring different services to use tailscale
-    without having to do everything all at once.
-    """
-    tailscale_auth_key = "TAILSCALE_AUTH_KEY"
-    tailscale_resource_key = f"TAILSCALE_{base_key}"
-    return (
-        tailscale_resource_key
-        if os.environ.get(tailscale_resource_key) and os.environ.get(tailscale_auth_key)
-        else base_key
-    )
-
-DATABASES = {
-    "default": dj_database_url.config(env=tailscale_resource_key("DATABASE_URL"))
-}
-```
-7. Push your code to your Heroku application, triggering a new build.
-
-```shell
-git push heroku
-```

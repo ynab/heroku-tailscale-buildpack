@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# This `rake` pass-through script will force all network traffic through ProxyChains
+# when the environment variable TAILSCALE_AUTH_KEY is set so that anything run through
+# rake will have access to the Tailscale network.
+
+bin/tailscale_proxy bin/rake_original "$@"
