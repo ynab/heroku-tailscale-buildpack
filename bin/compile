@@ -38,6 +38,7 @@ mkdir -p $PC_SOURCE_DIR
 BUILDPACK_VARIABLES="TAILSCALE_BUILD_TS_VERSION TAILSCALE_BUILD_TS_TARGETARCH"
 
 shopt -s nullglob
+DEFAULT_TAILSCALE_BUILD_TS_VERSION=1.74.0
 
 # Load any tailscale build environment variables for the application
 # into the actual environment variables.
@@ -53,7 +54,7 @@ else
 fi
 
 if [ -z "${TAILSCALE_BUILD_TS_VERSION:-}" ] ; then
-  export TAILSCALE_BUILD_TS_VERSION=1.42.0
+  export TAILSCALE_BUILD_TS_VERSION=$DEFAULT_TAILSCALE_BUILD_TS_VERSION
   log "No Tailscale version specified in TAILSCALE_BUILD_TS_VERSION config var. Defaulting to $TAILSCALE_BUILD_TS_VERSION."
 else
   log "Using Tailscale version from TAILSCALE_BUILD_TS_VERSION config var: $TAILSCALE_BUILD_TS_VERSION"
