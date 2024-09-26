@@ -3,7 +3,7 @@
 set -e
 
 if [ -z "$TAILSCALE_AUTH_KEY" ]; then
-  echo "[tailscale]: Will not start because TAILSCALE_AUTH_KEY is not set"
+  echo "[tailscale]: Will not be available because TAILSCALE_AUTH_KEY is not set"
 
 else
   if [ -z "$TAILSCALE_HOSTNAME" ]; then
@@ -33,5 +33,5 @@ else
     --timeout=15s
 
   export ALL_PROXY=socks5://localhost:1055/
-  echo "[tailscale]: Started using hostname=$tailscale_hostname; SOCKS5 proxy available at localhost:1055"
+  echo "[tailscale]: Connected to tailnet as hostname=$tailscale_hostname; SOCKS5 proxy available at localhost:1055."
 fi
