@@ -66,7 +66,7 @@ The following settings are available for configuration via environment variables
   by the OS. Note that this will change the machine name used in MagicDNS. Defaults to the 
   hostname of the application (a guid). If you have [Heroku Labs runtime-dyno-metadata](https://devcenter.heroku.com/articles/dyno-metadata)
   enabled, it defaults to ``[commit]-[dyno]-[appname]``.
-- ``TAILSCALE_SHIELDS_UP"`` - Block incoming connections from other devices on your Tailscale 
+- ``TAILSCALE_SHIELDS_UP`` - Block incoming connections from other devices on your Tailscale 
   network. Useful for personal devices that only make outgoing connections. Defaults to off.
 - ``TAILSCALED_VERBOSE`` - Controls verbosity for the tailscaled command. Defaults to 0.
 
