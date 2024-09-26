@@ -2,10 +2,7 @@
 
 Run [Tailscale](https://tailscale.com/) on a Heroku dyno.
 
-This is based on https://tailscale.com/kb/1107/heroku/.
-
-Thank you to @rdotts, @kongmadai, @mvisonneau for their work on tailscale-docker and tailscale-heroku.
-
+This buildpack installs and configures Tailscale in [userspace networking](https://tailscale.com/kb/1112/userspace-networking) mode so that it is able to run on a Heroku dyno.  A SOCKS5 proxy is available at `localhost:1055` to provide access to a tailnet.
 
 ## Usage
 
@@ -64,7 +61,7 @@ The following settings are available for configuration via environment variables
   default to not accepting routes. Defaults to accepting.
 - ``TAILSCALE_ADVERTISE_EXIT_NODES`` - Offer to be an exit node for outbound internet traffic 
   from the Tailscale network. Defaults to not advertising.
-- ``TAILSCALE_ADVERTISE_TAGS`` - Tags to assign to this device.  If the `TAILSCALE_AUTH_KEY` is an OAuth Client Secret, this value is required.
+- ``TAILSCALE_ADVERTISE_TAGS`` - Tags to assign to this device.   Each tag name should be prefixed with `tag:` and multiple tags should be delimited with a comma.  For example, if you wanted to assign the tags `development-database` and `development-server` you would specify the value `tag:development-database,tag:development-server`.  If the `TAILSCALE_AUTH_KEY` is an OAuth Client Secret, this value is required.
 - ``TAILSCALE_HOSTNAME`` - Provide a hostname to use for the device instead of the one provided 
   by the OS. Note that this will change the machine name used in MagicDNS. Defaults to the 
   hostname of the application (a guid). If you have [Heroku Labs runtime-dyno-metadata](https://devcenter.heroku.com/articles/dyno-metadata)
@@ -86,3 +83,11 @@ cause a rebuild. These are all optional and will default to the latest values.
   variables in respect to the executables. For example, a specific dyno could change
   ``TAILSCALE_HOSTNAME`` before tailscale starts.
 - ``TAILSCALE_BUILD_PROXYCHAINS_REPO`` - The repository to install the proxychains-ng library from.
+
+## Credit
+
+This approach is based on Tailscale Heroku/Docker docs here: https://tailscale.com/kb/1107/heroku/ but has been adapted for use as a Heroku buildpack.
+
+Thank you to @rdotts, @kongmadai, @mvisonneau for the work on tailscale-docker and tailscale-heroku.
+
+Thank you @tim-schilling for the work on the original [heroku-tailscale-buildpack](https://github.com/aspiredu/heroku-tailscale-buildpack) repo from which this repo was forked.
