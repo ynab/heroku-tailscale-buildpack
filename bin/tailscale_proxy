@@ -9,7 +9,7 @@
 
 set -e # Halt on errors
 
-if [ -n "$TAILSCALE_AUTH_KEY" ]; then
+if [ -n "$TAILSCALE_AUTH_KEY" ] && command -v proxychains4 > /dev/null; then
     proxychains4 -q -f vendor/proxychains-ng/proxychains.conf "$@"
 else
     exec "$@"
