@@ -16,10 +16,6 @@ function tailscale() {
   echo ">>> mocked tailscale call
 --authkey="${TAILSCALE_AUTH_KEY}?preauthorized=true&ephemeral=true" 
 --hostname=${TAILSCALE_HOSTNAME:-test}
---accept-dns=${TAILSCALE_ACCEPT_DNS:-true}
---accept-routes=${TAILSCALE_ACCEPT_ROUTES:-true}
---advertise-exit-node=${TAILSCALE_ADVERTISE_EXIT_NODE:-false}
---shields-up=${TAILSCALE_SHIELDS_UP:-false}
 --advertise-tags=${TAILSCALE_ADVERTISE_TAGS:-} \
 <<<"
 }
@@ -30,11 +26,7 @@ export -f tailscale
 run_test sanity heroku-tailscale-start.sh
 TAILSCALED_VERBOSE=1 \
   TAILSCALE_AUTH_KEY="ts-auth-test" \
-  TAILSCALE_HOSTNAME="test-host" \
-  TAILSCALE_ACCEPT_DNS="false" \
-  TAILSCALE_ACCEPT_ROUTES="false" \
-  TAILSCALE_ADVERTISE_EXIT_NODE="true" \
-  TAILSCALE_SHIELDS_UP="true" \
+  TAILSCALE_HOSTNAME="test-host" \        
   TAILSCALE_ADVERTISE_TAGS="tag:test" \
   run_test envs heroku-tailscale-start.sh
 
@@ -42,10 +34,6 @@ TAILSCALED_VERBOSE=1 \
   TAILSCALE_AUTH_KEY="ts-auth-test" \
   HEROKU_APP_NAME="heroku-app" \
   DYNO="another_web.1" \
-  HEROKU_SLUG_COMMIT="hunter20123456789"\
-  TAILSCALE_ACCEPT_DNS="false" \
-  TAILSCALE_ACCEPT_ROUTES="false" \
-  TAILSCALE_ADVERTISE_EXIT_NODE="true" \
-  TAILSCALE_SHIELDS_UP="true" \
+  HEROKU_SLUG_COMMIT="hunter20123456789"\        
   TAILSCALE_ADVERTISE_TAGS="tag:test" \
   run_test hostname heroku-tailscale-start.sh

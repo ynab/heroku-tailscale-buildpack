@@ -24,14 +24,11 @@ else
   (tailscaled -verbose ${TAILSCALED_VERBOSE:--1} --tun=userspace-networking --socks5-server=localhost:1055 > /dev/null 2>&1 &)  
   tailscale up \
     --authkey="${TAILSCALE_AUTH_KEY}?preauthorized=true&ephemeral=true" \
-    --hostname="$tailscale_hostname" \
-    --accept-dns=${TAILSCALE_ACCEPT_DNS:-true} \
-    --accept-routes=${TAILSCALE_ACCEPT_ROUTES:-true} \
-    --advertise-exit-node=${TAILSCALE_ADVERTISE_EXIT_NODE:-false} \
-    --shields-up=${TAILSCALE_SHIELDS_UP:-false} \
+    --hostname="$tailscale_hostname" \                    
     --advertise-tags=${TAILSCALE_ADVERTISE_TAGS:-} \
-    --timeout=15s
+    --timeout=15s \
+    ${TAILSCALE_ADDITIONAL_ARGS}
 
   export ALL_PROXY=socks5://localhost:1055/
-  echo "[tailscale]: Connected to tailnet as hostname=$tailscale_hostname; SOCKS5 proxy available at localhost:1055."
+  echo "[tailscale]: Connected to tailnet as hostname=$tailscale_hostname; SOCKS5 proxy available at localhost:1055"
 fi

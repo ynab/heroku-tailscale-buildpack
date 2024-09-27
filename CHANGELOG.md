@@ -2,6 +2,7 @@
 
 * Update README to include mention of serving application to only users in your
   Tailnet.
+* Simplify config and introduce `TAILSCALE_ADDITIONAL_ARGS`
 
 ## 1.1.1 (2023-06-15)
 
