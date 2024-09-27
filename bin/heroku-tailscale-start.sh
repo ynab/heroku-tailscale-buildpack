@@ -27,7 +27,7 @@ else
     --hostname="$tailscale_hostname" \                    
     --advertise-tags=${TAILSCALE_ADVERTISE_TAGS:-} \
     --timeout=15s \
-    ${TAILSCALE_ADDITIONAL_ARGS}
+    ${TAILSCALE_ADDITIONAL_ARGS:---timeout=15s}
 
   export ALL_PROXY=socks5://localhost:1055/
   echo "[tailscale]: Connected to tailnet as hostname=$tailscale_hostname; SOCKS5 proxy available at localhost:1055"
