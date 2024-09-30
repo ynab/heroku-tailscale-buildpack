@@ -26,6 +26,7 @@ else
     --authkey="${TAILSCALE_AUTH_KEY}?preauthorized=true&ephemeral=true" \
     --hostname="$TAILSCALE_HOSTNAME" \
     --advertise-tags=${TAILSCALE_ADVERTISE_TAGS:-} \
+    --accept-routes \
     --timeout=15s \
     ${TAILSCALE_ADDITIONAL_ARGS:---timeout=15s}
 

@@ -62,6 +62,8 @@ The following settings are available for configuration via environment variables
   enabled, it defaults to ``[commit]-[dyno]-[appname]``.
 - `TAILSCALE_ADDITIONAL_ARGS` - Additional arguments to pass when running `tailscale up`.  See https://tailscale.com/kb/1080/cli for details.
 
+Note: `--accept-routes` is always passed to `tailscale up` to ensure that any advertized routes are accepted by the Tailscale client.
+
 ## Credit
 
 This approach is based on Tailscale Heroku/Docker docs here: https://tailscale.com/kb/1107/heroku/ but has been adapted for use as a Heroku buildpack.
