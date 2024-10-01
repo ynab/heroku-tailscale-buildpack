@@ -59,7 +59,7 @@ The following settings are available for configuration via environment variables
 - ``TAILSCALE_HOSTNAME`` - Provide a hostname to use for the device instead of the one provided 
   by the OS. Note that this will change the machine name used in MagicDNS. Defaults to the 
   hostname of the application (a guid). If you have [Heroku Labs runtime-dyno-metadata](https://devcenter.heroku.com/articles/dyno-metadata)
-  enabled, it defaults to ``[commit]-[dyno]-[appname]``.
+  enabled, it defaults to ``[appname]-[commit]-[dyno]``.
 - `TAILSCALE_ADDITIONAL_ARGS` - Additional arguments to pass when running `tailscale up`.  See https://tailscale.com/kb/1080/cli for details.
 
 Note: `--accept-routes` is always passed to `tailscale up` to ensure that any advertized routes are accepted by the Tailscale client.
