@@ -15,7 +15,7 @@ else
       # allow for periods.
       DYNO=${DYNO//./-}
       DYNO=${DYNO//_/-}
-      TAILSCALE_HOSTNAME="$HEROKU_APP_NAME-${HEROKU_SLUG_COMMIT:0:8}-$DYNO"
+      TAILSCALE_HOSTNAME="heroku-$HEROKU_APP_NAME-${HEROKU_SLUG_COMMIT:0:8}-$DYNO"
     fi
   else
     TAILSCALE_HOSTNAME="$TAILSCALE_HOSTNAME"
