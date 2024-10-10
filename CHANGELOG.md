@@ -1,8 +1,8 @@
 ## Unreleased
 
-* Update README to include mention of serving application to only users in your
-  Tailnet.
+* Allow usage of OAuth client for auth
 * Simplify config and introduce `TAILSCALE_ADDITIONAL_ARGS`
+* Update README to make instructions streamlined
 
 ## 1.1.1 (2023-06-15)
 
